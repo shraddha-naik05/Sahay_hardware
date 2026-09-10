@@ -1,0 +1,13 @@
+opencv-python
+numpy
+flask
+mediapipe
+pyttsx3
+SpeechRecognition
+PyAudio
+python-dotenv
+requests
+twilio
+insightface==0.7.3
+onnxruntime
+pyserial

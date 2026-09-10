@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SAHAY — Caregiver Dashboard (Demo)</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
+        h1 { color: #2c3e50; }
+        .status { margin-bottom: 20px; font-size: 14px; color: #555; }
+        table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #eee; }
+        th { background: #2c3e50; color: white; }
+        .info { color: #2c7a2c; }
+        .soft { color: #b8860b; font-weight: bold; }
+        .emergency { color: #c0392b; font-weight: bold; background: #fdecea; }
+    </style>
+</head>
+<body>
+    <h1>SAHAY — Live Alert Feed</h1>
+    <div class="status">Auto-refreshes every 3 seconds. This is the review-demo stand-in for the Caregiver Companion App.</div>
+    <table id="logTable">
+        <thead>
+            <tr><th>Time</th><th>Type</th><th>Message</th><th>Severity</th></tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+    </table>
+
+    <script>
+        async function fetchLogs() {
+            const res = await fetch('/api/logs');
+            const logs = await res.json();
+            const body = document.getElementById('logBody');
+            body.innerHTML = '';
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+                const time = new Date(log.timestamp * 1000).toLocaleTimeString();
+                row.innerHTML = `<td>${time}</td><td>${log.type}</td><td>${log.message}</td><td class="${log.severity}">${log.severity}</td>`;
+                body.appendChild(row);
+            });
+        }
+        fetchLogs();
+        setInterval(fetchLogs, 3000);
+    </script>
+</body>
+</html>
