@@ -1767,7 +1767,282 @@ def start_keyboard_listener():
 
     return listener
 
+# ============================================================
+# ARDUINO / NODEMCU HARDWARE LISTENER
+# ============================================================
 
+def handle_panic():
+    """
+    Handles a physical panic-button press from NodeMCU.
+
+    The NodeMCU sends:
+        PANIC
+
+    This function uses the same SAHAY Telegram
+    notification system already used by the project.
+    """
+
+    print()
+    print("========================================")
+    print("        PHYSICAL PANIC BUTTON")
+    print("========================================")
+
+    timestamp = time.strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+    message = (
+        "SAHAY PANIC ALERT\n\n"
+        "Physical panic button was pressed.\n\n"
+        f"Time: {timestamp}\n"
+        "Source: NodeMCU V3\n"
+        "Location: Home"
+    )
+
+    try:
+
+        # ----------------------------------------------------
+        # Voice alert
+        # ----------------------------------------------------
+
+        speak(
+            "Emergency panic button pressed. "
+            "Sending an alert."
+        )
+
+        # ----------------------------------------------------
+        # Database
+        # ----------------------------------------------------
+
+        log_activity(
+            "panic",
+            "Hardware",
+            "Physical panic button pressed."
+        )
+
+        create_alert(
+            "panic",
+            "Physical panic button pressed.",
+            severity="CRITICAL"
+        )
+
+        # ----------------------------------------------------
+        # Telegram
+        # ----------------------------------------------------
+
+        result = send_telegram_message(
+            message
+        )
+
+        print(
+            f"[PANIC] Telegram result: {result}"
+        )
+
+        if result:
+
+            print(
+                "[PANIC] Telegram alert sent successfully."
+            )
+
+        else:
+
+            print(
+                "[PANIC] Telegram alert failed."
+            )
+
+    except Exception as e:
+
+        print(
+            "[PANIC ERROR]"
+        )
+
+        print(
+            f"{type(e).__name__}: {e}"
+        )
+
+
+def arduino_listener():
+    """
+    Continuously listens to the NodeMCU USB serial port.
+
+    Expected messages:
+
+        PANIC
+        DISTANCE:120.5
+        DISTANCE:75.2
+        DISTANCE:35.8
+    """
+
+    if not ARDUINO_ENABLED:
+
+        print(
+            "[ARDUINO] Hardware interface disabled."
+        )
+
+        return
+
+    if serial is None:
+
+        print(
+            "[ARDUINO ERROR] PySerial is not installed."
+        )
+
+        print(
+            "Run: pip install pyserial"
+        )
+
+        return
+
+    try:
+
+        print()
+        print(
+            "========================================"
+        )
+
+        print(
+            "[ARDUINO] Connecting to NodeMCU..."
+        )
+
+        print(
+            f"[ARDUINO] Port: {ARDUINO_PORT}"
+        )
+
+        print(
+            f"[ARDUINO] Baud: {ARDUINO_BAUD_RATE}"
+        )
+
+        print(
+            "========================================"
+        )
+
+        arduino = serial.Serial(
+            ARDUINO_PORT,
+            ARDUINO_BAUD_RATE,
+            timeout=1
+        )
+
+        # NodeMCU resets when serial connection opens.
+        time.sleep(2)
+
+        print(
+            "[ARDUINO] NodeMCU connected."
+        )
+
+        print(
+            "[ARDUINO] Listening for hardware events..."
+        )
+
+        while True:
+
+            try:
+
+                line = (
+                    arduino
+                    .readline()
+                    .decode(
+                        "utf-8",
+                        errors="ignore"
+                    )
+                    .strip()
+                )
+
+                if not line:
+                    continue
+
+                print(
+                    f"[ARDUINO] {line}"
+                )
+
+                # =================================================
+                # PANIC BUTTON
+                # =================================================
+
+                if line == "PANIC":
+
+                    print(
+                        "[ARDUINO] PANIC signal received!"
+                    )
+
+                    # Run in separate thread so the serial
+                    # listener remains responsive.
+
+                    threading.Thread(
+                        target=handle_panic,
+                        daemon=True
+                    ).start()
+
+                # =================================================
+                # ULTRASONIC DISTANCE
+                # =================================================
+
+                elif line.startswith(
+                    "DISTANCE:"
+                ):
+
+                    distance_value = (
+                        line.split(
+                            ":",
+                            1
+                        )[1]
+                    )
+
+                    try:
+
+                        distance = float(
+                            distance_value
+                        )
+
+                        print(
+                            f"[ULTRASONIC] "
+                            f"{distance:.1f} cm"
+                        )
+
+                    except ValueError:
+
+                        print(
+                            "[ARDUINO] Invalid "
+                            f"distance: {distance_value}"
+                        )
+
+            except Exception as e:
+
+                print(
+                    "[ARDUINO READ ERROR]"
+                )
+
+                print(
+                    f"{type(e).__name__}: {e}"
+                )
+
+                time.sleep(1)
+
+    except Exception as e:
+
+        print()
+        print(
+            "========================================"
+        )
+
+        print(
+            "[ARDUINO CONNECTION ERROR]"
+        )
+
+        print(
+            f"{type(e).__name__}: {e}"
+        )
+
+        print(
+            "Check the COM port and make sure"
+        )
+
+        print(
+            "Arduino Serial Monitor is closed."
+        )
+
+        print(
+            "========================================"
+        )
 # ============================================================
 # MAIN
 # ============================================================

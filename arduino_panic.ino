@@ -9,7 +9,6 @@ unsigned long lastDebounceTime = 0;
 const unsigned long debounceDelay = 50;
 
 void setup() {
-
   // Button uses ESP32's internal pull-up resistor
   pinMode(PANIC_BUTTON_PIN, INPUT_PULLUP);
 
@@ -36,6 +35,5 @@ void loop() {
       Serial.println("PANIC");
     }
   }
-
   lastButtonState = reading;
 }

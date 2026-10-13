@@ -12,7 +12,6 @@ from alerts import init_db, DB_PATH
 
 app = Flask(__name__)
 
-
 @app.route("/api/alert", methods=["POST"])
 def receive_alert():
     # main.py already writes to SQLite directly via alerts.log_event();
@@ -21,7 +20,6 @@ def receive_alert():
     # signal it can poll. For the demo it just acknowledges.
     data = request.get_json(force=True)
     return jsonify({"status": "received", "data": data}), 200
-
 
 @app.route("/api/logs", methods=["GET"])
 def get_logs():
@@ -36,11 +34,9 @@ def get_logs():
     ]
     return jsonify(logs)
 
-
 @app.route("/dashboard")
 def dashboard():
     return render_template("dashboard.html")
-
 
 if __name__ == "__main__":
     init_db()
